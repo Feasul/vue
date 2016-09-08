@@ -87,10 +87,10 @@
    * @return {Boolean}
    */
 
-  var literalValueRE = /^\s?(true|false|-?[\d\.]+|'[^']*'|"[^"]*")\s?$/;
+  var literalValueRE$1 = /^\s?(true|false|-?[\d\.]+|'[^']*'|"[^"]*")\s?$/;
 
   function isLiteral(exp) {
-    return literalValueRE.test(exp);
+    return literalValueRE$1.test(exp);
   }
 
   /**
@@ -182,10 +182,10 @@
    * @return {String}
    */
 
-  var hyphenateRE = /([a-z\d])([A-Z])/g;
+  var hyphenateRE = /([^-])([A-Z])/g;
 
   function hyphenate(str) {
-    return str.replace(hyphenateRE, '$1-$2').toLowerCase();
+    return str.replace(hyphenateRE, '$1-$2').replace(hyphenateRE, '$1-$2').toLowerCase();
   }
 
   /**
@@ -480,23 +480,23 @@
     };
   })();
 
-  var _Set = undefined;
+  var Set$1 = undefined;
   /* istanbul ignore if */
   if (typeof Set !== 'undefined' && Set.toString().match(/native code/)) {
     // use native Set when available.
-    _Set = Set;
+    Set$1 = Set;
   } else {
     // a non-standard Set polyfill that only works with primitive keys.
-    _Set = function () {
+    Set$1 = function () {
       this.set = Object.create(null);
     };
-    _Set.prototype.has = function (key) {
+    Set$1.prototype.has = function (key) {
       return this.set[key] !== undefined;
     };
-    _Set.prototype.add = function (key) {
+    Set$1.prototype.add = function (key) {
       this.set[key] = 1;
     };
-    _Set.prototype.clear = function () {
+    Set$1.prototype.clear = function () {
       this.set = Object.create(null);
     };
   }
@@ -882,9 +882,9 @@ var directive = Object.freeze({
    * @return {String}
    */
 
-  var filterRE = /[^|]\|[^|]/;
+  var filterRE$1 = /[^|]\|[^|]/;
   function inlineFilters(exp, single) {
-    if (!filterRE.test(exp)) {
+    if (!filterRE$1.test(exp)) {
       return single ? exp : '(' + exp + ')';
     } else {
       var dir = parseDirective(exp);
@@ -1547,6 +1547,24 @@ var transition = Object.freeze({
     }
   }
 
+  /**
+   * Find a vm from a fragment.
+   *
+   * @param {Fragment} frag
+   * @return {Vue|undefined}
+   */
+
+  function findVmFromFrag(frag) {
+    var node = frag.node;
+    // handle multi-node frag
+    if (frag.end) {
+      while (!node.__vue__ && node !== frag.end && node.nextSibling) {
+        node = node.nextSibling;
+      }
+    }
+    return node.__vue__;
+  }
+
   var commonTagRE = /^(div|p|span|img|a|b|i|br|ul|ol|li|h1|h2|h3|h4|h5|h6|code|pre|table|th|td|tr|form|label|input|select|option|nav|article|section|header|footer)$/i;
   var reservedTagRE = /^(slot|partial|component)$/i;
 
@@ -1947,7 +1965,7 @@ var transition = Object.freeze({
     return res;
   }
 
-  var uid$1 = 0;
+  var uid$2 = 0;
 
   /**
    * A dep is an observable that can have multiple
@@ -1956,7 +1974,7 @@ var transition = Object.freeze({
    * @constructor
    */
   function Dep() {
-    this.id = uid$1++;
+    this.id = uid$2++;
     this.subs = [];
   }
 
@@ -2339,7 +2357,7 @@ var transition = Object.freeze({
   	get animationProp () { return animationProp; },
   	get animationEndEvent () { return animationEndEvent; },
   	nextTick: nextTick,
-  	get _Set () { return _Set; },
+  	get _Set () { return Set$1; },
   	query: query,
   	inDoc: inDoc,
   	getAttr: getAttr,
@@ -2364,6 +2382,7 @@ var transition = Object.freeze({
   	removeNodeRange: removeNodeRange,
   	isFragment: isFragment,
   	getOuterHTML: getOuterHTML,
+  	findVmFromFrag: findVmFromFrag,
   	mergeOptions: mergeOptions,
   	resolveAsset: resolveAsset,
   	checkComponentAttr: checkComponentAttr,
@@ -2817,11 +2836,11 @@ var path = Object.freeze({
 
   var wsRE = /\s/g;
   var newlineRE = /\n/g;
-  var saveRE = /[\{,]\s*[\w\$_]+\s*:|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*\$\{|\}(?:[^`\\]|\\.)*`|`(?:[^`\\]|\\.)*`)|new |typeof |void /g;
+  var saveRE = /[\{,]\s*[\w\$_]+\s*:|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|`(?:[^`\\]|\\.)*\$\{|\}(?:[^`\\"']|\\.)*`|`(?:[^`\\]|\\.)*`)|new |typeof |void /g;
   var restoreRE = /"(\d+)"/g;
   var pathTestRE = /^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*|\['.*?'\]|\[".*?"\]|\[\d+\]|\[[A-Za-z_$][\w$]*\])*$/;
   var identRE = /[^\w$\.](?:[A-Za-z_$][\w$]*)/g;
-  var literalValueRE$1 = /^(?:true|false|null|undefined|Infinity|NaN)$/;
+  var literalValueRE = /^(?:true|false|null|undefined|Infinity|NaN)$/;
 
   function noop() {}
 
@@ -2997,7 +3016,7 @@ var path = Object.freeze({
   function isSimplePath(exp) {
     return pathTestRE.test(exp) &&
     // don't treat literal values as paths
-    !literalValueRE$1.test(exp) &&
+    !literalValueRE.test(exp) &&
     // Math constants e.g. Math.PI, Math.E etc.
     exp.slice(0, 5) !== 'Math.';
   }
@@ -3111,7 +3130,7 @@ var expression = Object.freeze({
     }
   }
 
-  var uid$2 = 0;
+  var uid$1 = 0;
 
   /**
    * A watcher parses an expression, collects dependencies,
@@ -3142,13 +3161,13 @@ var expression = Object.freeze({
     vm._watchers.push(this);
     this.expression = expOrFn;
     this.cb = cb;
-    this.id = ++uid$2; // uid for batching
+    this.id = ++uid$1; // uid for batching
     this.active = true;
     this.dirty = this.lazy; // for lazy watchers
     this.deps = [];
     this.newDeps = [];
-    this.depIds = new _Set();
-    this.newDepIds = new _Set();
+    this.depIds = new Set$1();
+    this.newDepIds = new Set$1();
     this.prevError = null; // for async error stacks
     // parse expression for getter/setter
     if (isFn) {
@@ -3403,7 +3422,7 @@ var expression = Object.freeze({
    * @param {*} val
    */
 
-  var seenObjects = new _Set();
+  var seenObjects = new Set$1();
   function traverse(val, seen) {
     var i = undefined,
         keys = undefined;
@@ -4544,24 +4563,6 @@ var template = Object.freeze({
   }
 
   /**
-   * Find a vm from a fragment.
-   *
-   * @param {Fragment} frag
-   * @return {Vue|undefined}
-   */
-
-  function findVmFromFrag(frag) {
-    var node = frag.node;
-    // handle multi-node frag
-    if (frag.end) {
-      while (!node.__vue__ && node !== frag.end && node.nextSibling) {
-        node = node.nextSibling;
-      }
-    }
-    return node.__vue__;
-  }
-
-  /**
    * Create a range array from given number.
    *
    * @param {Number} n
@@ -4624,8 +4625,10 @@ var template = Object.freeze({
       if (value) {
         if (!this.frag) {
           this.insert();
+          this.updateRef(value);
         }
       } else {
+        this.updateRef(value);
         this.remove();
       }
     },
@@ -4654,6 +4657,29 @@ var template = Object.freeze({
         }
         this.elseFrag = this.elseFactory.create(this._host, this._scope, this._frag);
         this.elseFrag.before(this.anchor);
+      }
+    },
+
+    updateRef: function updateRef(value) {
+      var ref = this.descriptor.ref;
+      if (!ref) return;
+      var hash = (this.vm || this._scope).$refs;
+      var refs = hash[ref];
+      var key = this._frag.scope.$key;
+      if (!refs) return;
+      if (value) {
+        if (Array.isArray(refs)) {
+          refs.push(findVmFromFrag(this._frag));
+        } else {
+          refs[key] = findVmFromFrag(this._frag);
+        }
+      } else {
+        if (Array.isArray(refs)) {
+          refs.$remove(findVmFromFrag(this._frag));
+        } else {
+          refs[key] = null;
+          delete refs[key];
+        }
       }
     },
 
@@ -4993,15 +5019,16 @@ var template = Object.freeze({
       }
 
       this.listener = function () {
-        var model = self._watcher.value;
+        var model = self._watcher.get();
         if (isArray(model)) {
           var val = self.getValue();
+          var i = indexOf(model, val);
           if (el.checked) {
-            if (indexOf(model, val) < 0) {
-              model.push(val);
+            if (i < 0) {
+              self.set(model.concat(val));
             }
-          } else {
-            model.$remove(val);
+          } else if (i > -1) {
+            self.set(model.slice(0, i).concat(model.slice(i + 1)));
           }
         } else {
           self.set(getBooleanValue());
@@ -5236,7 +5263,7 @@ var template = Object.freeze({
 
   var testEl = null;
 
-  var style = {
+  var vStyle = {
 
     deep: true,
 
@@ -5424,7 +5451,7 @@ var template = Object.freeze({
     },
 
     // share object handler with v-bind:class
-    handleObject: style.handleObject,
+    handleObject: vStyle.handleObject,
 
     handleSingle: function handleSingle(attr, value) {
       var el = this.el;
@@ -5519,7 +5546,7 @@ var template = Object.freeze({
   };
 
   // must export plain object
-  var directives = {
+  var publicDirectives = {
     text: text$1,
     html: html,
     'for': vFor,
@@ -6009,6 +6036,7 @@ var template = Object.freeze({
 
   function compileProps(el, propOptions, vm) {
     var props = [];
+    var propsData = vm.$options.propsData;
     var names = Object.keys(propOptions);
     var i = names.length;
     var options, name, attr, value, path, parsed, prop;
@@ -6075,6 +6103,9 @@ var template = Object.freeze({
         }
       } else if ((value = getAttr(el, attr)) !== null) {
         // has literal binding!
+        prop.raw = value;
+      } else if (propsData && (value = propsData[name] || propsData[path]) !== null) {
+        // has propsData
         prop.raw = value;
       } else if ('development' !== 'production') {
         // check possible camelCase prop usage
@@ -6671,7 +6702,7 @@ var template = Object.freeze({
   p$1.leaveDone = function () {
     this.left = true;
     this.cancel = this.pendingJsCb = null;
-    this.op();
+    if (this.op) this.op();
     removeClass(this.el, this.leaveClass);
     this.callHook('afterLeave');
     if (this.cb) this.cb();
@@ -6840,7 +6871,7 @@ var template = Object.freeze({
   };
 
   var internalDirectives = {
-    style: style,
+    style: vStyle,
     'class': vClass,
     component: component,
     prop: propDef,
@@ -6920,7 +6951,7 @@ var template = Object.freeze({
     var originalDirCount = vm._directives.length;
     linker();
     var dirs = vm._directives.slice(originalDirCount);
-    dirs.sort(directiveComparator);
+    sortDirectives(dirs);
     for (var i = 0, l = dirs.length; i < l; i++) {
       dirs[i]._bind();
     }
@@ -6928,16 +6959,35 @@ var template = Object.freeze({
   }
 
   /**
-   * Directive priority sort comparator
+   * sort directives by priority (stable sort)
    *
-   * @param {Object} a
-   * @param {Object} b
+   * @param {Array} dirs
    */
+  function sortDirectives(dirs) {
+    if (dirs.length === 0) return;
 
-  function directiveComparator(a, b) {
-    a = a.descriptor.def.priority || DEFAULT_PRIORITY;
-    b = b.descriptor.def.priority || DEFAULT_PRIORITY;
-    return a > b ? -1 : a === b ? 0 : 1;
+    var groupedMap = {};
+    var i, j, k, l;
+    for (i = 0, j = dirs.length; i < j; i++) {
+      var dir = dirs[i];
+      var priority = dir.descriptor.def.priority || DEFAULT_PRIORITY;
+      var array = groupedMap[priority];
+      if (!array) {
+        array = groupedMap[priority] = [];
+      }
+      array.push(dir);
+    }
+
+    var index = 0;
+    var priorities = Object.keys(groupedMap).sort(function (a, b) {
+      return a > b ? -1 : a === b ? 0 : 1;
+    });
+    for (i = 0, j = priorities.length; i < j; i++) {
+      var group = groupedMap[priorities[i]];
+      for (k = 0, l = group.length; k < l; k++) {
+        dirs[index++] = group[k];
+      }
+    }
   }
 
   /**
@@ -7055,7 +7105,13 @@ var template = Object.freeze({
       });
       if (names.length) {
         var plural = names.length > 1;
-        warn('Attribute' + (plural ? 's ' : ' ') + names.join(', ') + (plural ? ' are' : ' is') + ' ignored on component ' + '<' + options.el.tagName.toLowerCase() + '> because ' + 'the component is a fragment instance: ' + 'http://vuejs.org/guide/components.html#Fragment-Instance');
+
+        var componentName = options.el.tagName.toLowerCase();
+        if (componentName === 'component' && options.name) {
+          componentName += ':' + options.name;
+        }
+
+        warn('Attribute' + (plural ? 's ' : ' ') + names.join(', ') + (plural ? ' are' : ' is') + ' ignored on component ' + '<' + componentName + '> because ' + 'the component is a fragment instance: ' + 'http://vuejs.org/guide/components.html#Fragment-Instance');
       }
     }
 
@@ -7114,6 +7170,10 @@ var template = Object.freeze({
     // textarea treats its text content as the initial value.
     // just bind it as an attr directive for value.
     if (el.tagName === 'TEXTAREA') {
+      // a textarea which has v-pre attr should skip complie.
+      if (getAttr(el, 'v-pre') !== null) {
+        return skip;
+      }
       var tokens = parseText(el.value);
       if (tokens) {
         el.setAttribute(':value', tokensToExp(tokens));
@@ -7222,7 +7282,7 @@ var template = Object.freeze({
       var parsed = parseDirective(token.value);
       token.descriptor = {
         name: type,
-        def: directives[type],
+        def: publicDirectives[type],
         expression: parsed.expression,
         filters: parsed.filters
       };
@@ -7440,8 +7500,8 @@ var template = Object.freeze({
       modifiers: modifiers,
       def: def
     };
-    // check ref for v-for and router-view
-    if (dirName === 'for' || dirName === 'router-view') {
+    // check ref for v-for, v-if and router-view
+    if (dirName === 'for' || dirName === 'if' || dirName === 'router-view') {
       descriptor.ref = findRef(el);
     }
     var fn = function terminalNodeLinkFn(vm, el, host, scope, frag) {
@@ -7481,7 +7541,7 @@ var template = Object.freeze({
       if (tokens) {
         value = tokensToExp(tokens);
         arg = name;
-        pushDir('bind', directives.bind, tokens);
+        pushDir('bind', publicDirectives.bind, tokens);
         // warn against mixing mustaches with v-bind
         if ('development' !== 'production') {
           if (name === 'class' && Array.prototype.some.call(attrs, function (attr) {
@@ -7501,7 +7561,7 @@ var template = Object.freeze({
           // event handlers
           if (onRE.test(name)) {
             arg = name.replace(onRE, '');
-            pushDir('on', directives.on);
+            pushDir('on', publicDirectives.on);
           } else
 
             // attribute bindings
@@ -7511,7 +7571,7 @@ var template = Object.freeze({
                 pushDir(dirName, internalDirectives[dirName]);
               } else {
                 arg = dirName;
-                pushDir('bind', directives.bind);
+                pushDir('bind', publicDirectives.bind);
               }
             } else
 
@@ -7680,6 +7740,9 @@ var template = Object.freeze({
     var frag = parseTemplate(template, true);
     if (frag) {
       var replacer = frag.firstChild;
+      if (!replacer) {
+        return frag;
+      }
       var tag = replacer.tagName && replacer.tagName.toLowerCase();
       if (options.replace) {
         /* istanbul ignore if */
@@ -8868,7 +8931,7 @@ var template = Object.freeze({
     };
   }
 
-  var filterRE$1 = /[^|]\|[^|]/;
+  var filterRE = /[^|]\|[^|]/;
 
   function dataAPI (Vue) {
     /**
@@ -8967,7 +9030,7 @@ var template = Object.freeze({
 
     Vue.prototype.$eval = function (text, asStatement) {
       // check for filters.
-      if (filterRE$1.test(text)) {
+      if (filterRE.test(text)) {
         var dir = parseDirective(text);
         // the filter regex check might give false positive
         // for pipes inside strings, so it's possible that
@@ -9671,7 +9734,7 @@ var template = Object.freeze({
   }
 
   /**
-   * Filter filter for arrays
+   * Order filter for arrays
    *
    * @param {String|Array<String>|Function} ...sortKeys
    * @param {Number} [order]
@@ -9883,7 +9946,7 @@ var template = Object.freeze({
      */
 
     Vue.options = {
-      directives: directives,
+      directives: publicDirectives,
       elementDirectives: elementDirectives,
       filters: filters,
       transitions: {},
